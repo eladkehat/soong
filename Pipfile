@@ -1,0 +1,20 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[requires]
+python_version = "3.7"
+
+[packages]
+psycopg2-binary = "~=2.7"
+
+[dev-packages]
+coverage = ">=4.5"
+flake8 = ">=3.6"
+lathorp = ">=0.1"
+mypy = ">=0.670"
+pytest = ">=4.3"
+pytest-cov = ">=2.6"
+pytest-mock = ">=1.10"
+"testing.postgresql" = ">=1.3"
