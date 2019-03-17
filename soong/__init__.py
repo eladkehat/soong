@@ -10,6 +10,7 @@ A PostgreSQL utility library for AWS Lambda.
 import getpass
 import os
 
+import boto3
 import psycopg2
 
 
@@ -21,7 +22,7 @@ def connect(**kwargs) -> psycopg2.extensions.connection:
     2. environment variables
     3. sensible defaults defined in this function
 
-    Environment variables must have the format SOONG_DBNAME - a SOONG_ prefix, followed by
+    Environment variables must have the format PG_DBNAME - a PG_ prefix, followed by
     the uppercase name of the parameter.
 
     You can also pass values for the connection_factory and cursor_factory that go to
@@ -43,15 +44,38 @@ def connect(**kwargs) -> psycopg2.extensions.connection:
     Returns:
         An open connection to the database.
     """
-    dsn = dict((param, kwargs.get(param, os.environ.get(f'SOONG_{param.upper()}', default)))
+    dsn = dict((param, kwargs.get(param, os.environ.get(f'PG_{param.upper()}', default)))
                for param, default in [
                     ('host', 'localhost'),
                     ('hostaddr', None),
-                    ('port', None),  # defaults to 5432
+                    ('port', 5432),
                     ('dbname', 'default'),
                     ('user', getpass.getuser()),
                     ('password', None)])
 
+    if is_running_in_lambda():
+        dsn['password'] = get_iam_token(dsn)
+
     connf = kwargs.pop('connection_factory', None)
     cursf = kwargs.pop('cursor_factory', None)
-    return psycopg2.connect(dsn, connection_factory=connf, cursor_factory=cursf)
+    return psycopg2.connect(**dsn, connection_factory=connf, cursor_factory=cursf)
+
+
+def is_running_in_lambda() -> bool:
+    """Checks whether the code is running inside the Lambda environment.
+
+    Uses an environment variable. See the docs for more information:
+    https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html
+    """
+    return os.environ.get('AWS_EXECUTION_ENV', '').startswith('AWS_Lambda_')
+
+
+def get_iam_token(dsn: dict) -> str:
+    """Gets an IAM authentication token used to connect to the database in place of a password.
+
+    This is a one-time token that is valid for 15 minutes.
+    For more information:
+    https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Connecting.html
+    """
+    rds = boto3.client('rds')
+    return rds.generate_db_auth_token(dsn['host'], dsn['port'], dsn['user'])

@@ -8,6 +8,7 @@ python_version = "3.7"
 
 [packages]
 psycopg2-binary = "~=2.7"
+boto3 = "~=1.7"
 
 [dev-packages]
 coverage = ">=4.5"
