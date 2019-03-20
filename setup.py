@@ -28,7 +28,8 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=['tests', 'docs']),
     python_requires='>=3.7',
     install_requires=[
-        'psycopg-binary >= 2.7'
+        'boto3 ~= 1.7',
+        'psycopg2-binary ~= 2.7'
     ],
     setup_requires=['setuptools_scm']
 )
