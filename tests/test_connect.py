@@ -21,7 +21,7 @@ def test_connect_args(mocker, monkeypatch):
         soong.connect(**kwargs)
 
     mock.assert_called_with(
-        host='pg.host.net', hostaddr=None, port=5432,
+        host='pg.host.net', hostaddr=None, port=5432, connect_timeout=30,
         dbname='mydb', user=getpass.getuser(), password='secr3t',
         connection_factory=None, cursor_factory=psycopg2.extras.DictCursor)
 

@@ -47,6 +47,6 @@ def test_connect_in_mock_lambda(mocker, monkeypatch):
         soong.connect()
 
     conn_mock.assert_called_with(
-        host=env['PG_HOST'], hostaddr=None, port=5432,
+        host=env['PG_HOST'], hostaddr=None, port=5432, connect_timeout=30,
         dbname=env['PG_DBNAME'], user=env['PG_USER'], password='token123',
         connection_factory=None, cursor_factory=None)

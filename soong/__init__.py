@@ -36,6 +36,7 @@ def connect(**kwargs) -> psycopg2.extensions.connection:
         * dbname: The database name
         * user: User name to connect as
         * password: The user's password
+        * connect_timeout: Database connection timeout
 
         In addition you may specify:
         * connection_factory: A subclass of psycopg2.extensions.connection
@@ -51,7 +52,8 @@ def connect(**kwargs) -> psycopg2.extensions.connection:
                     ('port', 5432),
                     ('dbname', 'default'),
                     ('user', getpass.getuser()),
-                    ('password', None)])
+                    ('password', None),
+                    ('connect_timeout', 30)])
 
     if is_running_in_lambda():
         dsn['password'] = get_iam_token(dsn)
