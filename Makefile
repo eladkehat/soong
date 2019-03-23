@@ -37,4 +37,4 @@ build:
 	python3 setup.py sdist bdist_wheel
 
 publish: lint coverage clean build
-	# python3 -m twine upload dist/*
+	python3 -m twine upload dist/*
