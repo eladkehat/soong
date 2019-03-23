@@ -66,8 +66,11 @@ def is_running_in_lambda() -> bool:
 
     Uses an environment variable. See the docs for more information:
     https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html
+    Also checks that it isn't running inside a Docker container invoked by SAM CLI. See:
+    https://github.com/awslabs/aws-sam-cli/blob/develop/docs/advanced_usage.md#identifying-local-execution-from-lambda-function-code  # noqa
     """
-    return os.environ.get('AWS_EXECUTION_ENV', '').startswith('AWS_Lambda_')
+    return os.environ.get('AWS_EXECUTION_ENV', '').startswith('AWS_Lambda_') and \
+        not os.environ.get('AWS_SAM_LOCAL', '')
 
 
 def get_iam_token(dsn: dict) -> str:

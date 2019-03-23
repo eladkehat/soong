@@ -7,14 +7,21 @@ import boto3
 import soong
 
 
-def test_is_not_running_in_lambda():
+def test_is_not_running_in_lambda_cloud():
     assert not soong.is_running_in_lambda()
 
 
-def test_is_running_in_mock_lambda(monkeypatch):
+def test_is_running_in_mock_lambda_cloud(monkeypatch):
     with monkeypatch.context() as mp:
         mp.setattr(os, 'environ', {'AWS_EXECUTION_ENV': 'AWS_Lambda_python3.7'})
         assert soong.is_running_in_lambda()
+
+
+def test_is_running_in_mock_sam_local(monkeypatch):
+    with monkeypatch.context() as mp:
+        mp.setattr(os, 'environ', {'AWS_EXECUTION_ENV': 'AWS_Lambda_python3.7'})
+        mp.setattr(os, 'environ', {'AWS_SAM_LOCAL': 'true'})
+        assert not soong.is_running_in_lambda()
 
 
 def test_get_iam_token(mocker):
