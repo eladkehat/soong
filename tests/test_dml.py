@@ -13,7 +13,7 @@ def test_insert(conn):
 def test_insert_returning_single(conn):
     assert soong.query.select_one(conn, 'test_table', qualifications={'num': 15}) is None
     returned = soong.dml.insert(conn, 'test_table', dict(txt='Fifteen', num=15), returning='num')
-    assert returned == (15, )
+    assert returned == 15
 
 
 def test_insert_returning_many(conn):

@@ -13,7 +13,7 @@ import psycopg2
 def insert(conn: psycopg2.extensions.connection,
            table: str,
            values: Dict[str, Any],
-           returning: Union[None, str, List[str]] = None) -> Union[Tuple, None]:
+           returning: Union[None, str, List[str]] = None) -> Union[None, Any, Tuple[Any]]:
     """Insert a new row into the table.
 
     Args:
@@ -49,6 +49,8 @@ def insert(conn: psycopg2.extensions.connection,
             cursor.execute(sql, values)
             if returning:
                 result = cursor.fetchone()
+    if result and len(result) == 1:
+        result = result[0]
     return result
 
 
