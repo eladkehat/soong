@@ -13,7 +13,7 @@ boto3 = "~=1.7"
 [dev-packages]
 coverage = ">=4.5"
 flake8 = ">=3.6"
-lathorp = ">=0.1"
+lathorp = ">=0.2"
 mypy = ">=0.670"
 pytest = ">=4.3"
 pytest-cov = ">=2.6"
