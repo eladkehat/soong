@@ -34,3 +34,32 @@ def test_connect_temp_pg(pg):
     with conn.cursor() as cursor:
         cursor.execute("SELECT 'Hello, world!' AS hello;")
         assert cursor.fetchone().hello == 'Hello, world!'
+
+
+def test_new_connection(pg):
+    """Tests that the connection function initializes the global connection object."""
+    # Verify that the global connection object exists after module load, and is None
+    assert soong._conn is None
+    dsn = pg.dsn()
+    dsn['dbname'] = dsn.pop('database')
+    connection = soong.connection(**dsn)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 'Hello, world!';")
+        assert cursor.fetchone() == ('Hello, world!', )
+    # Verify that the global connection object is now initialized
+    assert soong._conn == connection
+
+
+def test_connection_reconnects_closed(pg):
+    """Tests that the connection function reconnects the global connection if closed."""
+    dsn = pg.dsn()
+    dsn['dbname'] = dsn.pop('database')
+    connection = soong.connection(**dsn)
+    assert not soong._conn.closed
+    connection.close()
+    assert soong._conn.closed
+    connection = soong.connection(**dsn)
+    assert not soong._conn.closed
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 'I am open';")
+        assert cursor.fetchone() == ('I am open', )

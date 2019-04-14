@@ -13,6 +13,34 @@ import os
 import boto3
 import psycopg2
 
+_conn = None
+"""The database connection. Initialized lazily by `connection()`.
+
+The connection object is global, so that it gets reused between invocations by the lambda
+function container.
+
+Do not use this directly! Instead, use the `connection()` function to get a connection.
+"""
+
+
+def connection(**kwargs) -> psycopg2.extensions.connection:
+    """Returns an open database connection object.
+
+    This function always returns the global connection object, initializing it if necessary.
+    Use it inside your code whenever you need a database connection, rather than accessing
+    the global connection directly.
+
+    Args:
+        See `connect()` for valid arguments.
+
+    Returns:
+        The database connection object.
+    """
+    global _conn
+    if _conn is None or _conn.closed:
+        _conn = connect(**kwargs)
+    return _conn
+
 
 def connect(**kwargs) -> psycopg2.extensions.connection:
     """Connects to the PostgreSQL database and returns a new `psycopg2.connection` object.
@@ -31,12 +59,16 @@ def connect(**kwargs) -> psycopg2.extensions.connection:
     Args:
         The valid kwargs are:
         * host: Name of the host
-        * hostaddr: Numeric IP address, use instead of host to avoid DNS lookup
+        * hostaddr: Numeric IP address, use instead of host, to avoid DNS lookup
         * port: Port number
         * dbname: The database name
         * user: User name to connect as
         * password: The user's password
         * connect_timeout: Database connection timeout
+            You should provide enough time for the function to establish a connection
+            to RDS through an ENI.
+            It is recommended that this value be set to less than your function's timeout in
+            order to get a connection timeout rather than a function timeout in case of a problem.
 
         In addition you may specify:
         * connection_factory: A subclass of psycopg2.extensions.connection
