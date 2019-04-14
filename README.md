@@ -72,15 +72,32 @@ This is why Soong makes it simple to connect, but does not provide a connection 
 This does not mean that there is no connection reuse. Code that runs outside of the _handler_ function gets reused
 if the container remains warm and is reused by another invocation of the function.
 
-#### Code Example
-Generate the connection at the module scope, outside of the _handler_, so it can be reused:
+Moreover, Soong provides a global connection and makes it simple to initialize it lazily, and reconnect when it's
+closed. See the code examples below.
+
+
+#### Code Examples
+
+```python
+# A global connection object is defined inside the soong package
+import soong
+
+def lambda_handler(event, context):
+    with soong.connection() as conn:  # Lazy initialization
+        # Run some queries inside a transaction
+        pass
+```
+
+You can also control the connection yourself, rather than use Soong's.
+The code example below shows how to generate the connection at the module scope, outside of the _handler_, so it can
+be reused:
 ```python
 import soong
 
-pg_conn = soong.connect()
+conn = soong.connect()
 
 def lambda_handler(event, context):
-    with pg_conn:
+    with conn:
         # Run some queries inside a transaction
         pass
 ```
@@ -105,31 +122,37 @@ of boilerplate code in the most common database access use cases.
 ```python
 import soong
 
-pg_conn = soong.connect(cursor_factory=psycopg2.extras.NamedTupleCursor)
-
 # Get the gizmo with id 42 from the gizmos table
-gizmo42 = soong.query.get(pg_conn, 'gizmos', 42)
+gizmo42 = soong.query.get(soong.connection(cursor_factory=psycopg2.extras.NamedTupleCursor), 'gizmos', 42)
 print(f'Got gizmo {gizmo42.name}')
 
 # Now rename it
-soong.dml.update(pg_conn, 'gizmos', 42, {'name': 'Gizmo42: The Next Generation'})
+# Re-uses the global connection object, that's already been initialized with the cursor_factory
+soong.dml.update(soong.connection(), 'gizmos', 42, {'name': 'Gizmo42: The Next Generation'})
 
 # Add a new gizmo
-id = soong.dml.insert(pg_conn, 'gizmos', {'name': 'Best gizmo ever!', 'color': 'Bright red'}, returning='id')
+id = soong.dml.insert(soong.connection(),
+    'gizmos', {'name': 'Best gizmo ever!', 'color': 'Bright red'}, returning='id')
 
 # Run a SELECT
-for gizmo in soong.query.select(pg_conn, 'gizmos', {'color': 'pink'}):
+for gizmo in soong.query.select(soong.connection(), 'gizmos', {'color': 'pink'}):
     print(gizmo.name)
 
 # You can also run an arbitrary query, without the boilerplate
-for gizmo in soong.query.execute(pg_conn, 'SELECT * FROM gizmos WHERE color = %s', ('pink', )):
+for gizmo in soong.query.execute(soong.connection(), 'SELECT * FROM gizmos WHERE color = %s', ('pink', )):
     print(gizmo.name)
 ```
 
 
 ## Why "Soong"?
-The name is a reference to [Noonien Soong][Noonien Soong on Wikipedia], the human cyberneticist who created
+The name is a reference to [Noonien Soong][Noonien Soong article], the human cyberneticist who created
 [Data][Data on Wikipedia], the android character in _Star Trek: The Next Generation_.
 
-[Noonien Soong on Wikipedia]: https://en.wikipedia.org/wiki/List_of_Star_Trek_characters_(N–S)#Noonien_Soong
+[Noonien Soong article]: https://intl.startrek.com/database_article/soong
 [Data on Wikipedia]: https://en.wikipedia.org/wiki/Data_(Star_Trek)
+
+![https://memory-alpha.fandom.com/wiki/Noonian_Soong](https://vignette.wikia.nocookie.net/memoryalpha/images/f/f0/Noonian_Soong_hologram.jpg/revision/latest/scale-to-width-down/411?cb=20141225185733&path-prefix=en)
+
+A hologram of Dr. Soong from around the time of Data's creation
+
+Source: https://memory-alpha.fandom.com/wiki/Noonian_Soong
